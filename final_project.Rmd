@@ -258,11 +258,11 @@ $a$ = land (in acres)
 
 Constraints: $30,000$ gallons of water available, $w \leq 30$  
 
-Each unit of $n_{t}$ needs $1000$ gallons water, and each unit $n_{c}$ needs $6000$ gallons.
+Each unit of $n_{t}$ needs $1000$ gallons water, and each unit $n_{c}$ needs $6000$ gallons.  
 $$n_{t} + 6n_{c} \leq w \leq 30$$
 $$n_{t} \leq 30 - 6n_{c}$$ 
-Each unit of $n_{t}$ needs 5 acres, each unit of $n_{c}$ needs 2.5 acres. Total 30 acres available:
-$$5n_{t} + 2.5n_{c} \leq 30$$ 
+Each unit of $n_{t}$ needs 5 acres, each unit of $n_{c}$ needs 2.5 acres. Total 30 acres available:  
+$$5n_{t} + 2.5n_{c} \leq 30$$  
 $$n_{t} \leq 12 - 2n_{c}$$  
 There is $750 starting capital available. Labor is $100 per 100 bushels:
 $$100(n_{t} + n_{c}) \leq 750$$  
@@ -276,23 +276,25 @@ $$P = 200n_{t} + 300n_{c}$$
 ```{r}
 suppressWarnings(suppressMessages(library(ggplot2)))
 
-f1 <- function(x) 30-6*x
-f2 <- function(x) 7.5 - x
-f3 <- function(x) 5
-f4 <- function(x) 12-2*x
+f1 <- function(x) 30-6*x #water constraint
+f2 <- function(x) 7.5 - x  #capital constraint
+f3 <- function(x) 5 #max tomatoes
+f4 <- function(x) 12-2*x  #acres
 x1 = seq(0,5, by = .5)
 x0 = rep(4.5,length(x1))
-df = data.frame(x1,x0, y1=f1(x1), y2=f2(x1),y3= f3(x1), y4 = f4(x1))
-df <-  transform(df, z =pmin(y1,y2,5,y4), z2 = pmin(x1,4.5))
+df = data.frame(x1,x0, water=f1(x1), capital=f2(x1), max_tomato= f3(x1), acres = f4(x1))
+df <-  transform(df, z =pmin(water,capital,5,acres), z2 = pmin(x1,4.5))
 ggplot(df, aes(x = x1)) + 
-  geom_line(aes(y = y1), colour = 'blue') +
-  geom_line(aes(y = y2), colour = 'green') +
-  geom_line(aes(y = y3), colour = 'black') +
-  geom_line(aes(y = y4), colour = 'purple') +
-  geom_line(aes(y = y1, x = x0), colour = 'black') +
+  geom_line(aes(y = water, colour = 'water'))+
+  geom_line(aes(y = capital, colour = 'capital'))+
+  geom_line(aes(y = max_tomato, colour = 'max corn')) +
+  geom_line(aes(y = acres, colour = 'acres')) +
+  geom_line(aes(y = water, x = x0, colour = 'max tomatoes'))+
   geom_ribbon(aes(ymin=0, ymax = z, x= z2), fill = 'gray80') +
   geom_point(aes(x = 4.5, y=f1(4.5)), color="red")+
-  geom_point(aes(x = 2.5, y=f2(2.5)), color="red")
+  geom_point(aes(x = 2.5, y=f2(2.5)), color="red") +
+  scale_colour_manual(name = "Constraint", values=c("green", "purple","black","brown","blue"))+
+  ylab("corn") + xlab("tomatoes")
 ```
 
 
@@ -334,15 +336,17 @@ f3 <- function(x) 5
 f4 <- function(x) 12-2*x
 x1 = seq(0,5, by = .5)
 x0 = rep(3,length(x1))
-df = data.frame(x1,x0, y1=f1(x1), y2=f2(x1),y3= f3(x1), y4 = f4(x1))
-df <-  transform(df, z =pmax(pmin(y1,y2,y4),5), z2 = pmax(x1,3))
+df = data.frame(x1,x0, water=f1(x1), capital=f2(x1),max_tomato= f3(x1), acres = f4(x1))
+df <-  transform(df, z =pmax(pmin(water,capital,acres),5), z2 = pmax(x1,3))
 ggplot(df, aes(x = x1)) + 
-  geom_line(aes(y = y1), colour = 'blue') +
-  geom_line(aes(y = y2), colour = 'green') +
-  geom_line(aes(y = y3), colour = 'black') +
-  geom_line(aes(y = y4), colour = 'purple') +
-  geom_line(aes(y = y1, x = x0), colour = 'black') +
-  geom_ribbon(aes(ymin=5, ymax = z, x= z2), fill = 'gray80')
+  geom_line(aes(y = water, colour = 'water'))+
+  geom_line(aes(y = capital, colour = 'capital'))+
+  geom_line(aes(y = max_tomato, colour = 'max corn')) +
+  geom_line(aes(y = acres, colour = 'acres')) +
+  geom_line(aes(y = water, x = x0, colour = 'max tomatoes'))+
+  geom_ribbon(aes(ymin=5, ymax = z, x= z2), fill = 'gray80') +
+  scale_colour_manual(name = "Constraint", values=c("green", "purple","black","brown","blue"))+
+  ylab("corn") + xlab("tomatoes")
 ```
 
 There is no corresponding point that meets these new conditions because of the capital  constraint (green line)  where $n_{t} \leq 7.5 - n_{c}$ is always below the minimum quantity required by the new contract. There is not enough starting capital to pay for the labor needed to produce the minimum quantities.  
@@ -373,17 +377,20 @@ f3 <- function(x) 5
 f4 <- function(x) 12-2*x
 x1 = seq(0,5, by = .5)
 x0 = rep(4.5,length(x1))
-df = data.frame(x1,x0, y1=f1(x1), y2=f2(x1),y3= f3(x1), y4 = f4(x1))
-df <-  transform(df, z =pmin(y1,y2,5,y4), z2 = pmin(x1,4.5))
+df = data.frame(x1,x0, water=f1(x1), capital=f2(x1),max_corn= f3(x1), acres = f4(x1))
+df <-  transform(df, z =pmin(water,capital,5,acres), z2 = pmin(x1,4.5))
 ggplot(df, aes(x = x1)) + 
-  geom_line(aes(y = y1), colour = 'blue') +
-  geom_line(aes(y = y2), colour = 'green') +
-  geom_line(aes(y = y3), colour = 'black') +
-  geom_line(aes(y = y4), colour = 'purple') +
-   geom_vline(xintercept = 4.5) +
+  geom_line(aes(y = water, colour = 'water'))+
+  geom_line(aes(y = capital, colour = 'capital'))+
+  geom_line(aes(y = max_corn, colour = 'max corn')) +
+  geom_line(aes(y = acres, colour = 'acres')) +
+  geom_vline(xintercept = 4.5, aes(colour = "max tomatoes")) +
   geom_ribbon(aes(ymin=0, ymax = z, x= z2), fill = 'gray80') +
   geom_point(aes(x = 4.5, y=f2(4.5)), color="red")+
-  geom_point(aes(x = 2, y=f2(2)), color="red")
+  geom_point(aes(x = 2, y=f2(2)), color="red")+
+  scale_colour_manual(name = "Constraint", values=c("green", "purple","black","brown","blue"))+
+  ylab("corn") + xlab("tomatoes")
+
 ```
 
 Reducing the available starting capital moves the point of maximum profit to $(2, 5)$ or $1,900. Nothing is gained by adding additional water unless the available capital increases as well.
